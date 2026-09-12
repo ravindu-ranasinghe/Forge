@@ -1,0 +1,136 @@
+syntax = "proto3";
+
+package forge;
+
+option go_package = "github.com/Ritpra93/forge/internal/proto/forgepb";
+
+// Priority controls the scheduling order of tasks.
+// Higher values are dispatched before lower values.
+enum Priority {
+  PRIORITY_LOW      = 0;
+  PRIORITY_NORMAL   = 1;
+  PRIORITY_HIGH     = 2;
+  PRIORITY_CRITICAL = 3;
+}
+
+service ForgeScheduler {
+  rpc SubmitTask(TaskRequest) returns (TaskResponse);
+  rpc GetTaskStatus(TaskStatusRequest) returns (TaskStatusResponse);
+  rpc RegisterWorker(stream WorkerHeartbeat) returns (stream TaskAssignment);
+  rpc ReportTaskResult(TaskResult) returns (TaskResultAck);
+  rpc WatchTask(WatchTaskRequest) returns (stream TaskStatusResponse);
+  rpc GetClusterInfo(ClusterInfoRequest) returns (ClusterInfoResponse);
+  rpc ListTasks(ListTasksRequest) returns (ListTasksResponse);
+  rpc GetDashboardData(DashboardDataRequest) returns (DashboardDataResponse);
+}
+
+message TaskRequest {
+  string type = 1;
+  bytes payload = 2;
+  int32 max_retries = 3;
+  int32 timeout_seconds = 4;
+  Priority priority = 5;
+}
+
+message TaskResponse {
+  string task_id = 1;
+  string status = 2;
+}
+
+message TaskStatusRequest {
+  string task_id = 1;
+}
+
+message TaskStatusResponse {
+  string task_id = 1;
+  string status = 2;
+  int32 retry_count = 3;
+  string assigned_worker = 4;
+  int64 created_at = 5;
+  int64 updated_at = 6;
+  int32 priority = 7;
+}
+
+message WorkerHeartbeat {
+  string worker_id = 1;
+  repeated string capabilities = 2;
+  int32 available_slots = 3;
+}
+
+message TaskAssignment {
+  string task_id = 1;
+  string type = 2;
+  bytes payload = 3;
+  int32 timeout_seconds = 4;
+}
+
+message TaskResult {
+  string task_id = 1;
+  string worker_id = 2;
+  bool success = 3;
+  bytes result = 4;
+  string error_message = 5;
+}
+
+message TaskResultAck {
+  bool acknowledged = 1;
+}
+
+message WatchTaskRequest {
+  string task_id = 1;
+  int32 poll_interval_ms = 2;
+}
+
+message ClusterInfoRequest {}
+
+message ClusterInfoResponse {
+  string leader_address = 1;
+  string leader_id = 2;
+  repeated NodeInfo nodes = 3;
+}
+
+message NodeInfo {
+  string id = 1;
+  string address = 2;
+  string state = 3;
+}
+
+message ListTasksRequest {
+  string status_filter = 1;
+}
+
+message ListTasksResponse {
+  repeated TaskStatusResponse tasks = 1;
+}
+
+message DashboardDataRequest {}
+
+message DashboardDataResponse {
+  ClusterInfoResponse cluster = 1;
+  TaskCounts task_counts = 2;
+  repeated WorkerStatus workers = 3;
+  repeated ClusterEvent recent_events = 4;
+}
+
+message TaskCounts {
+  int32 pending = 1;
+  int32 running = 2;
+  int32 completed = 3;
+  int32 failed = 4;
+  int32 dead_letter = 5;
+  int32 retrying = 6;
+}
+
+message WorkerStatus {
+  string worker_id = 1;
+  repeated string capabilities = 2;
+  int32 available_slots = 3;
+  int64 last_heartbeat = 4;
+  string status = 5;
+}
+
+message ClusterEvent {
+  int64 timestamp = 1;
+  string type = 2;
+  string message = 3;
+}
