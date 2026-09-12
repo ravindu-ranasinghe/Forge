@@ -168,7 +168,7 @@ func (f *TaskFSM) Snapshot() (hcraft.FSMSnapshot, error) {
 
 // Restore replaces all FSM state from a snapshot.
 func (f *TaskFSM) Restore(reader io.ReadCloser) error {
-	defer reader.Close()
+	defer func() { _ = reader.Close() }()
 
 	var tasks map[string]*Task
 	if err := json.NewDecoder(reader).Decode(&tasks); err != nil {
