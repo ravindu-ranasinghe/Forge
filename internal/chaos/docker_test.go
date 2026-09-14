@@ -12,7 +12,7 @@ func TestNewChaosController(t *testing.T) {
 	if err != nil {
 		t.Skipf("docker not available: %v", err)
 	}
-	defer cc.Close()
+	defer func() { _ = cc.Close() }()
 
 	ctx := context.Background()
 	_, err = cc.cli.Ping(ctx)
@@ -28,7 +28,7 @@ func TestListForgeContainers(t *testing.T) {
 	if err != nil {
 		t.Skipf("docker not available: %v", err)
 	}
-	defer cc.Close()
+	defer func() { _ = cc.Close() }()
 
 	ctx := context.Background()
 	if _, pingErr := cc.cli.Ping(ctx); pingErr != nil {
